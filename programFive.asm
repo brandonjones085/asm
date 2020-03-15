@@ -4,7 +4,7 @@ TITLE ProgrammingAssignmentFive (main.asm)
 ; OSU email Address: jonewill@oregonstate.edu
 ; Course number/section:  271/400
 ; Project Number: 5
-; Due Date: 2/29/2020
+; Due Date: 3/2/2020
 ; Description: Program first introduces the programmer and instructions for the program
 ; An array with 200 random ints between 10 and 29 is generated using the RandomRange and Randomize procs
 ; The array is displayed with 20 values on each row and two spaces between each value
@@ -13,11 +13,13 @@ TITLE ProgrammingAssignmentFive (main.asm)
 ; The sorted array is then displayed with 20 values on each row and two spaces between each value
 ; The counts for each value are displayed with two spaces between each value.
 
+
 INCLUDE Irvine32.inc
 ; (insert constant definitions here)
 LOWER1	equ	10
 UPPER1	equ	29
 ARRAYSIZE equ	200
+
 
 .data
 intro1  	BYTE 	"Sorting and Counter Random integers!  by Brandon Jones",0
@@ -35,16 +37,29 @@ array   	DWORD   ARRAYSIZE  DUP(?)  	; the array
 counter 	DWORD   ?
 outerLoop   DWORD   ?
 .code
+
 main PROC
  ; main where all PROCs are called
 	call	Randomize     	; used to seed random values
+	push	OFFSET instruct3
+	push	OFFSET instruct2
+	push	OFFSET instruct1
+	push	OFFSET intro1
 	call	introduction  	; calls intro
+	
 	
 	push	OFFSET array  	; pushes array to stack
 	push	ARRAYSIZE     	; pushes size to stack
+	push	UPPER1
+	push	LOWER1
 	call	fillArray	
+
+
 	call	CrLf
+	push	OFFSET output1
 	call	unsortedList   	; output for unsortedList
+
+	push	OFFSET space
 	push	OFFSET array   	; pushes array to stack
 	push	ARRAYSIZE      	; pushes size to stack
 	call	displayList    	; shows the unsorted list
@@ -53,81 +68,90 @@ main PROC
 	push	OFFSET array   	; pushes array to stack
 	push	ARRAYSIZE      	; pushes size to stack
 	call	sortedList     	; sorts the list
+
+	push	OFFSET output2
 	push	OFFSET array
 	push	ARRAYSIZE
-	call	displayMedian
+	call	displayMedian   	; output for median
+
+
+	push	OFFSET output3    	; output for sorted
 	call	sortedOutput
+
+	push	OFFSET space
 	push	OFFSET array
 	push	ARRAYSIZE
 	call	displayList     	; shows the sorted list
 	call	CrLf
-  
+ 
+	push	OFFSET space
+	push	OFFSET output4
 	push	OFFSET array
 	push	ARRAYSIZE
 	call	countList
-	call	CrLf
-	call	goodbye
 
+	call	CrLf
+	push	OFFSET goodbye1
+	call	goodbye
 exit   	; exit to operating system
 main ENDP
 ; *****************************************************************************************;
 ; Procedure: Prints intro and instructions for the program.                            	;
-; Receives: N/A                                                                        	; 
+; Receives: N/A                                                                        	;
 ; Returns: intro1, instruct1, instruct2, instruct3                                     	;
 ; Preconditions: The program has started                                               	;
 ; Registers: edx                                                                       	;
 ; ******************************************************************************************
-
 introduction PROC
-	mov 	edx, OFFSET intro1           	; outputs intro
+ 
+	push	ebp
+	mov 	ebp, esp
+	mov 	edx, [ebp + 8]     	; outputs intro
 	call	WriteString
 	call	CrLf
-	mov 	edx, OFFSET instruct1
+	mov 	edx, [ebp + 12]
 	call	WriteString
 	call	CrLf
-	mov 	edx, OFFSET instruct2
+	mov 	edx, [ebp + 16]
 	call	WriteString
 	call	CrLf
-	mov 	edx, OFFSET instruct3
+	mov 	edx, [ebp + 20]
 	call	WriteString
 	call	CrLf
-	ret
+	pop 	ebp
+	ret 	20
 introduction ENDP
-
 ; ***********************************************************************************************************;
 ; Procedure: Fills the array with random ints between  10 and 29                                         	;
-; Receives: The array, and size of array on the stack                                                    	; 
+; Receives: The array, and size of array on the stack                                                    	;
 ; Returns: The array with random ints between 10 and 29                                                  	;
 ; Preconditions: The array and size of array are on the stack and Randomize has been called from main    	;
 ; Registers: ebp, esp, esi, ecx, eax                                                                     	;
 ; ***********************************************************************************************************;
-
 fillArray PROC
 	push	ebp
 	mov 	ebp, esp
-	mov 	esi, [ebp+12]   	; array
-	mov 	ecx, [ebp+8]    	; size
+	mov 	esi, [ebp+20]   	; array
+	mov 	ecx, [ebp+16]    	; size
 	randNum:
-    	mov 	eax, UPPER1 	; subtract higher from lower range
-    	sub 	eax, LOWER1
-    	add 	eax, 1      	; adds 1 to the random value
-    	call	RandomRange 	; takes eax and produces random int
-    	add 	eax, LOWER1 	; add lower to range
+    	mov 	eax, [ebp + 12] 	; subtract higher from lower range
+    	sub 	eax, [ebp + 8]
+    	add 	eax, 1             	; adds 1 to the random value
+    	call	RandomRange      	; takes eax and produces random int
+    	add 	eax, [ebp+8] 	; add lower to range
     	mov 	[esi], eax  	; moves eax into array
     	add 	esi, 4      	; next elementin array
     	loop	randNum     	; loops back
     	pop 	ebp         	; clears stack
-    	ret 	8         	
+    	ret 	20         	
 fillArray ENDP
-
 ; ***********************************************************************************************************;
 ; Procedure: Loops through the array and prints the values                                               	;
-; Receives: The array, and size of array on the stack                                                    	; 
+; Receives: The array, and size of array on the stack                                                    	;
 ; Returns: All the values in the array                                                                   	;
 ; Preconditions: The array has been filled with random ints                                              	;
 ; Registers: ebx, ebp, esp, esi, ecx, edx                                                                	;
 ; ***********************************************************************************************************;
-
 displayList PROC
 mov 	ebx, 0                	; sets ebx to zero for row counter
 push	ebp
@@ -143,61 +167,68 @@ more:
 	row:
     	mov 	eax, [esi]       	; current value into eax
     	call	WriteDec
-    	mov 	edx, OFFSET space	; double spaces called
+    	mov 	edx, [ebp+16]	; double spaces called
     	call	WriteString
-    	mov 	edx, OFFSET space
+    	mov 	edx, [ebp+16]
+    	call	WriteString
     	add 	esi, 4           	; moves to next element
     	loop	more
 endMore:                         	; clears stack
 	pop 	ebp
-	ret 8
+	ret 12
 displayList ENDP
+
 
 ; ***********************************************************************************************************;
 ; Procedure: Calls the output for unsorted random ints                                                   	;
-; Receives: N/A                                                                                          	; 
+; Receives: N/A                                                                                          	;
 ; Returns: The array with random ints between 10 and 29                                                  	;
 ; Preconditions: The array is filled with random ints                                                    	;
 ; Registers: edx                                                                                         	;
 ; ***********************************************************************************************************;
-
 unsortedList PROC
-	mov 	edx, OFFSET output1
+	push	ebp
+	mov 	ebp, esp
+	mov 	edx, [ebp + 8]
 	call	WriteString
 	call	CrLf
-	ret
+	pop 	ebp
+	ret 	8
 unsortedList ENDP
+
 
 ; ***********************************************************************************************************;
 ; Procedure: Calls the output for sorted random ints                                                     	;
-; Receives: N/A                                                                                          	; 
+; Receives: N/A                                                                                          	;
 ; Returns: The array with random ints between 10 and 29                                                  	;
 ; Preconditions: The array has been sorted                                                               	;
 ; Registers: edx                                                                                         	;
 ; ***********************************************************************************************************;
-
 sortedOutput PROC
-	mov 	edx, OFFSET output3
+	push	ebp
+	mov 	ebp, esp
+	mov 	edx, [ebp + 8 ]
 	call	WriteString
 	call	CrLf
-	ret
+	pop 	ebp
+	ret 	8
 sortedOutput ENDP
+
 
 ; ***********************************************************************************************************;
 ; Procedure: Takes an unsorted array and sorts into assending order                                      	;
 ; Compares two values, if the right is less than the left, the values are swapped.                       	;
-; Receives: The array, and size of array on the stack                                                    	; 
+; Receives: The array, and size of array on the stack                                                    	;
 ; Returns: Returns the array in assending order                                                          	;
 ; Preconditions: The array and size of array are on the stack                                            	;
 ; Registers: ebp, esp, esi, ecx, eax                                                                     	;
 ; ***********************************************************************************************************;
-
 sortedList PROC
 	push	ebp
 	mov 	ebp, esp
 	mov 	ecx, [ebp+8]            	; array size into ecx
 	dec 	ecx
-  
+ 
 	start:
     	push	ecx
     	mov 	esi, [ebp+12]       	; array
@@ -214,7 +245,7 @@ sortedList PROC
   	
     	pop 	ecx                 	; pops ecx off stack to loop back through array
     	loop	start               	
-  
+ 
    endSort:                         	; clears stack
     	pop 	ebp
     	ret 	8
@@ -222,12 +253,11 @@ sortedList ENDP
 
 ; ***********************************************************************************************************;
 ; Procedure: Returned the median value of the array                                                      	;
-; Receives: The array, and size of array on the stack                                                    	; 
+; Receives: The array, and size of array on the stack                                                    	;
 ; Returns: The median value of the array                                                                 	;
 ; Preconditions: The array and size of array are on the stack                                            	;
 ; Registers: ebp, esp, esi, ecx, eax, ebx                                                                	;
 ; ***********************************************************************************************************;
-
 displayMedian PROC
 	
 	call	CrLf
@@ -247,30 +277,29 @@ displayMedian PROC
 	add 	eax, ebx         	; adds the two middle values together for average
 	mov 	ebx, 2           	; used to divide by two
 	div 	ebx              	; after diviiding, the average is placed into eax
-	mov 	edx, OFFSET output2
+	mov 	edx, [ebp + 16]
 	call	WriteString
 	call	WriteDec
 	call	CrLf
 	pop 	ebp
-	ret 	8
+	ret 	16
 displayMedian ENDP
 
 ; ***********************************************************************************************************;
 ; Procedure: Counts the number of times a value occures in the array                                     	;
-; Receives: The array, and size of array on the stack                                                    	; 
+; Receives: The array, and size of array on the stack                                                    	;
 ; Returns: The number of times values occur in the array in assending order                              	;
 ; Preconditions: The array and size of array are on the stack                                            	;
 ; Registers: ebp, esp, esi, ecx, eax, ebx                                                                	;
 ; ***********************************************************************************************************;
-
 countList PROC
 call	CrLf
-mov 	edx, OFFSET output4
+push	ebp
+mov 	ebp, esp
+mov 	edx, [ebp + 16]
 call	WriteString
 call	CrLf
 mov 	ebx, 1                	; sets ebx to 0 for count
-push	ebp
-mov 	ebp, esp
 mov 	esi, [ebp+12]        	; array
 mov 	ecx, [ebp+8]         	; size
 mov 	eax, [esi]
@@ -288,9 +317,10 @@ inner:
     	noMatch:
         	mov 	eax, ebx           	; writes 1
         	call	WriteDec
-        	mov 	edx, OFFSET space
+        	mov 	edx, [ebp+20]
         	call	WriteString
-        	mov 	edx, OFFSET space
+        	mov 	edx, [ebp+20]
+        	call	WriteString
         	add 	esi, 4            	; moves to next value
         	mov 	eax, [esi]
         	mov 	ebx, 1            	; resets ebx to 1
@@ -298,26 +328,27 @@ inner:
   	
     	fin:
         	pop 	ebp
-        	ret 	8
+        	ret 	16
+  	
 countList ENDP
 
 ; *****************************************************************************************;
 ; Procedure: Prints goodbye message for the program.                                   	;
-; Receives: N/A                                                                        	; 
+; Receives: N/A                                                                        	;
 ; Returns: goodbye1                                                                    	;
 ; Preconditions: The program has completed                                             	;
 ; Registers: edx                                                                       	;
 ; ******************************************************************************************
-
 goodbye PROC
-	
+	push	ebp
+	mov 	ebp, esp
 	call	CrLf
-	mov 	edx, OFFSET goodbye1
+	mov 	edx, [ebp + 8]
 	call	WriteString
 	call	CrLf
-	ret
+	pop 	ebp
+	ret 	8
 goodbye ENDP
-
 END main
 
 
